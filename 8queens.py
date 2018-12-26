@@ -2,8 +2,6 @@ from random import *
 from math import *
 
 
-class SearchAgent(object):
-    pass
 
 
 class Queens:
@@ -11,15 +9,6 @@ class Queens:
         self.board=[0]*8
         for i in range(8):
             self.board[i]=i
-        """for i in range(8):
-            newcol = randint(0, 7)
-
-            temp = self.board[i]
-            self.board[i] = self.board[newcol]
-        self.board[newcol] = temp"""
-
-
-    def __createRandomBoard__(self):
         for i in range(8):
             newcol = randint(0, 7)
 
@@ -27,21 +16,19 @@ class Queens:
             self.board[i] = self.board[newcol]
         self.board[newcol] = temp
 
-
     def __getstate__(self):
-        self.__createRandomBoard__()
         return self.board
 
     def __isSolve__(self):
         if self.__herustic__()==0:
-            return True
+            return 1
 
     def __getGaurd__(self,qu1pos1,qu2pos2):
         [r1,c1]=qu1pos1
         [r2,c2]=qu2pos2
 
         if r1==r2 or c1==c2 or fabs(r1-r2)==fabs(c1-c2):
-            return True
+            return 1
 
     def __herustic__(self):
         gaurd_number=0
@@ -53,17 +40,17 @@ class Queens:
                         gaurd_number+=1
         return gaurd_number
 
-    def setQueen(self, queen_number, new_row_number):
-        if self.board[queen_number] == new_row_number:
+    def put(self, q_n, n_r_n):
+        if self.board[q_n] == n_r_n:
             return 1
         other_queen_number = -1;
-        for i in range(8):  # find the other queen number
-            if (self.board[i] == new_row_number):
+        for i in range(8):
+            if (self.board[i] == n_r_n):
                  other_queen_number = i;
         if other_queen_number == -1:
             return 0
-        self.board[other_queen_number] = self.board[queen_number]
-        self.board[queen_number] = new_row_number
+        self.board[other_queen_number] = self.board[q_n]
+        self.board[q_n] = n_r_n
 
         return 1
 
@@ -71,17 +58,17 @@ class Queens:
     def __showBoard__(self):
 
         for i in range(8):
-            s = "";
-            spaces = ["[ ]", "{ }"]  # stands for black & white tiles
+            b = "";
+            spaces = ["[ ]", "{ }"]
             for j in range(self.board[i]):
-                s = s + spaces[(j + i) % 2]
+                b += spaces[(j + i) % 2]
             if ((self.board[i] + i) % 2):
-                s = s + "{#}"
+                b += "{#}"
             else:
-                s = s + "[#]"
+                b += "[#]"
             for j in range(8 - self.board[i] - 1):
-                s = s + spaces[(self.board[i] - 1 + j + i) % 2]
-        print s
+                b+= spaces[(self.board[i] - 1 + j + i) % 2]
+        print b
 
 
 
@@ -98,26 +85,30 @@ class Queens:
 class SearchAgent:
     def __init__(self,problem):
         self.problem=problem
-        self.end=False
+        self.end=0
+
+
 
     def searchHillClimb(self):
-
+        if self.end:
+            return 0
         nextQueen=-1;nextPlace=-1;initiaHerustic=8;
+        for i in range(8):
+            for j in range(8):
+                prev = self.problem.board[i]
+                self.problem.put(i, j)
+                te=self.problem.__herustic__()
+                if initiaHerustic > self.problem.__herustic__():
+                    nextQueen=i;nextPlace=j;initiaHerustic=te;
+                self.problem.put(i,prev)
+        if nextQueen==-1:
+            self.end=1
+            return 0
+        if initiaHerustic < self.problem.__herustic__():
+            self.problem.put(nextQueen,nextPlace);
 
-        while not self.end:
-
-            if initiaHerustic > self.problem.__herustic__():
-
-                self.problem.setQueen(nextQueen,nextPlace);
 
 
-
-            for i in range(8):
-                for j in range(8):
-                    prvr=self.problem.board[i]
-                    self.problem.setQueen(i,j)
-                    if initiaHerustic < self.problem.__herustic__():
-                        temp=self.problem.__herustic__()
 
 
 
@@ -129,12 +120,12 @@ class Solve:
     def __init__(self,solverCounter):
         self.solverCounter=solverCounter;
         self.solver=[0]*solverCounter;
-        self.end=True
+        self.end=0
 
 
         for i in range(solverCounter):
             board=Queens()
-            #board=board.__createRandomBoard__();
+
             se=SearchAgent(board)
             self.solver[i]=se
 
@@ -144,12 +135,16 @@ class Solve:
             return 0
 
         for s in self.solver:
-            gameTheEnd+=(s.searchHillClimb==0)
+            if s.searchHillClimb()==0:
+                gameTheEnd+=1
         print "Solver ",gameTheEnd,"finish his game"
 
-        if gameTheEnd==self.solverCounter:
-
+        self.end=(gameTheEnd==self.solverCounter)
+        if self.end:
             return 0
+        return 1;
+
+
 
     def __showSolution__(self):
         answer=0;
@@ -176,5 +171,3 @@ class Solve:
 
 
 
-a=Solve(1000)
-a.__showSolution__()
